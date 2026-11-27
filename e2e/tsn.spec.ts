@@ -46,3 +46,25 @@ test('TC-2588: 802.1Qbv bounds it to 0.672 µs, and hops, rate and preemption ch
   await page.getByTestId('tsn-rate-100').click();
   await expect(page.getByTestId('tsn-row-qbv')).toHaveAttribute('data-guard-share', '0.49216');
 });
+
+test('TC-2659: after the reveals, three switches at 1 Gb/s reach the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/tsn');
+  await page.getByTestId('tsn-guess-blocked').click();
+  await page.getByTestId('tsn-reveal-button').click();
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('tsn-qbv-guess-window').click();
+  await page.getByTestId('tsn-qbv-reveal-button').click();
+  const first = page.getByTestId('challenge-priority-hops');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-priority-hops-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-priority-hops-hint-button').click();
+  await expect(page.getByTestId('challenge-priority-hops-hint')).toBeVisible();
+  await page.getByTestId('tsn-hops').fill('3');
+  await expect(page.getByTestId('tsn-row-priority')).toHaveAttribute('data-worst', '38928');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-priority-hops-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

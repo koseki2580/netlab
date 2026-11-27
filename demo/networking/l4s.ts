@@ -22,7 +22,8 @@ export const INCREASE = 5;
 export const MARK_THRESHOLD = 5;
 export const ROUNDS = 120;
 
-const BUFFER: Record<L4sScenario, number> = {
+/** Each scenario's buffer, packets. */
+export const BUFFER: Record<L4sScenario, number> = {
   'classic-deep': 100,
   'classic-shallow': 20,
   l4s: 100,
@@ -51,8 +52,8 @@ export interface Outcome {
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
-export function simulate(scenario: L4sScenario): Outcome {
-  const buffer = BUFFER[scenario];
+/** `buffer` overrides the scenario's own buffer, packets. */
+export function simulate(scenario: L4sScenario, buffer: number = BUFFER[scenario]): Outcome {
   let window = CAPACITY;
   let queue = 0;
   const rounds: Round[] = [];

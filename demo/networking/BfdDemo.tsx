@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -18,6 +19,7 @@ import {
   outage,
   type Detector,
 } from './bfd';
+import { INTERVAL_RANGE_MS, MULTIPLIER_RANGE, START_TIMERS, bfdChallenges } from './bfdChallenges';
 
 type Answer = 'quarter-second' | 'ten-seconds' | 'forty-seconds' | 'none';
 const ANSWERS: readonly Answer[] = ['quarter-second', 'ten-seconds', 'forty-seconds', 'none'];
@@ -42,8 +44,8 @@ function BfdLesson() {
   const t = useT();
   const [guess, setGuess] = useState<Answer | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [intervalMs, setIntervalMs] = useState(300);
-  const [multiplier, setMultiplier] = useState(3);
+  const [intervalMs, setIntervalMs] = useState(START_TIMERS.intervalMs);
+  const [multiplier, setMultiplier] = useState(START_TIMERS.multiplier);
   const ospf = DETECTORS[0]!;
   const asked = outage(ospf, 0);
   const truth = answerOf(asked.outageMs);
@@ -210,9 +212,9 @@ function BfdLesson() {
               {t('Interval', '送信間隔')}
               <input
                 type="range"
-                min={50}
-                max={1000}
-                step={50}
+                min={INTERVAL_RANGE_MS.min}
+                max={INTERVAL_RANGE_MS.max}
+                step={INTERVAL_RANGE_MS.step}
                 value={intervalMs}
                 data-testid="bfd-interval"
                 onChange={(event) => setIntervalMs(Number(event.target.value))}
@@ -224,8 +226,8 @@ function BfdLesson() {
               {t('Multiplier', '倍数')}
               <input
                 type="range"
-                min={2}
-                max={5}
+                min={MULTIPLIER_RANGE.min}
+                max={MULTIPLIER_RANGE.max}
                 value={multiplier}
                 data-testid="bfd-multiplier"
                 onChange={(event) => setMultiplier(Number(event.target.value))}
@@ -251,6 +253,9 @@ function BfdLesson() {
             )}
           </p>
         </div>
+      ) : null}
+      {revealed ? (
+        <LessonChallenges lessonId="bfd" challenges={bfdChallenges({ intervalMs, multiplier })} />
       ) : null}
     </div>
   );

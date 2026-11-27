@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { NetlabCanvas } from '../../src/components/NetlabCanvas';
 import { PacketTimeline } from '../../src/components/simulation/PacketTimeline';
 import { SimulationProvider, useSimulation } from '../../src/simulation/SimulationContext';
+import { LessonChallenges } from '../components/LessonChallenges';
 import { LessonCanvas, LessonPanel, LessonSplit } from '../components/LessonPanel';
 import {
   LESSON_CARD,
@@ -25,6 +26,7 @@ import {
   synToVip,
   type Algorithm,
 } from './loadBalancer';
+import { loadBalancerChallenges } from './loadBalancerChallenges';
 
 const PANEL_STYLE: React.CSSProperties = {
   background: 'var(--netlab-bg-primary)',
@@ -311,6 +313,13 @@ function LoadBalancerLesson() {
                 </tbody>
               </table>
             </div>
+
+            {revealed ? (
+              <LessonChallenges
+                lessonId="load-balancer"
+                challenges={loadBalancerChallenges({ algorithm, up })}
+              />
+            ) : null}
 
             <div style={LESSON_CARD} data-testid="lb-send">
               <div style={LESSON_LABEL}>

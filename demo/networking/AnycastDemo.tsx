@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -24,6 +25,7 @@ import {
   type SiteId,
   type UserId,
 } from './anycast';
+import { anycastChallenges } from './anycastChallenges';
 
 type Answer = 'tyo' | 'fra' | 'nyc' | 'spread';
 /** Display order: deliberate, so the right answers do not sit in one position across lessons. */
@@ -538,6 +540,10 @@ function AnycastLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges lessonId="anycast" challenges={anycastChallenges({ down, resolver })} />
       ) : null}
 
       {revealed ? (

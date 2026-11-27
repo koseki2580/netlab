@@ -47,3 +47,23 @@ test('TC-1927: voice waits 121 ms in FIFO, 1.3 ms with LLQ; the priority policer
   await expect(page.getByTestId('qq-bulk-rate')).toHaveText('1.0 Mbit/s');
   await expect(page.getByTestId('qq-voice-loss')).toHaveText('0 %');
 });
+
+test('TC-2675: after the reveal, a 1010 kbit bucket reaches the first challenge — the policer drops nothing', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/qos-queuing');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('qq-guess-policer-drops').click();
+  await page.getByTestId('qq-condition-button').click();
+  const first = page.getByTestId('challenge-policer-no-drop');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-policer-no-drop-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-policer-no-drop-hint-button').click();
+  await expect(page.getByTestId('challenge-policer-no-drop-hint')).toBeVisible();
+  await page.getByTestId('qq-depth').fill('1010');
+  await expect(page.getByTestId('qq-police-dropped')).toHaveText('0');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-policer-no-drop-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

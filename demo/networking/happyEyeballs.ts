@@ -31,11 +31,11 @@ export interface Outcome {
   readonly connectedMs: number;
 }
 
-/** Happy Eyeballs: IPv6 at 0, IPv4 at 250 ms if IPv6 is not up yet; the first wins. */
-export function happyEyeballs(scenario: Scenario): Outcome {
+/** Happy Eyeballs: IPv6 at 0, IPv4 after `delayMs` (250 ms) if IPv6 is not up yet; the first wins. */
+export function happyEyeballs(scenario: Scenario, delayMs: number = ATTEMPT_DELAY_MS): Outcome {
   const { v6, v4 } = RTT[scenario];
-  if (v6 !== null && v6 <= ATTEMPT_DELAY_MS) return { family: 'IPv6', connectedMs: v6 };
-  const viaV4 = ATTEMPT_DELAY_MS + v4;
+  if (v6 !== null && v6 <= delayMs) return { family: 'IPv6', connectedMs: v6 };
+  const viaV4 = delayMs + v4;
   if (v6 !== null && v6 <= viaV4) return { family: 'IPv6', connectedMs: v6 };
   return { family: 'IPv4', connectedMs: viaV4 };
 }

@@ -52,3 +52,27 @@ test('TC-2598: a NodePort on a node with no backend is SNATed under Cluster and 
   await expect(page.getByTestId('k8s-trace')).toHaveAttribute('data-backend-sees', '10.0.0.1');
   await expect(page.getByTestId('k8s-health')).toHaveAttribute('data-status', 'none');
 });
+
+test('TC-2665: in the explore card, NodePort under Cluster entering node-b reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/k8s-networking');
+  await page.getByTestId('k8s-guess-pod').click();
+  await page.getByTestId('k8s-reveal-button').click();
+  await page.getByTestId('k8s-cluster-guess-snat').click();
+  await page.getByTestId('k8s-cluster-reveal-button').click();
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('k8s-local-guess-dropped').click();
+  await page.getByTestId('k8s-local-reveal-button').click();
+  const first = page.getByTestId('challenge-cluster-no-hop');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-cluster-no-hop-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-cluster-no-hop-hint-button').click();
+  await expect(page.getByTestId('challenge-cluster-no-hop-hint')).toBeVisible();
+  await page.getByTestId('k8s-policy-Cluster').click();
+  await expect(page.getByTestId('k8s-trace')).toHaveAttribute('data-extra-hops', '0');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-cluster-no-hop-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

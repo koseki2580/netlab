@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -21,6 +22,7 @@ import {
   statusChanges,
   type Reading,
 } from './telemetry';
+import { SAMPLE_CHOICES, telemetryChallenges } from './telemetryChallenges';
 
 type Answer = 'full' | 'fifth' | 'flat';
 const ANSWERS: readonly Answer[] = ['full', 'fifth', 'flat'];
@@ -105,6 +107,8 @@ function TelemetryLesson() {
   const [revealed, setRevealed] = useState(false);
   const poll = useMemo(() => readings(POLL_S), []);
   const stream = useMemo(() => readings(SAMPLE_S), []);
+  const [sampleS, setSampleS] = useState<number>(SAMPLE_S);
+  const sampled = useMemo(() => readings(sampleS), [sampleS]);
   const truth: Answer = 'fifth';
   const clock = (at: number) => `${Math.floor(at / 60)}:${String(at % 60).padStart(2, '0')}`;
   const answerName = (answer: Answer) =>
@@ -228,17 +232,40 @@ function TelemetryLesson() {
             )}
           />
           <div style={{ ...LESSON_LABEL, marginTop: 8, textTransform: 'none' }}>
-            {t(`gNMI SAMPLE, every ${SAMPLE_S} seconds`, `gNMI の SAMPLE（${SAMPLE_S} 秒ごと）`)}
+            {t(`gNMI SAMPLE, every ${sampleS} seconds`, `gNMI の SAMPLE（${sampleS} 秒ごと）`)}
+          </div>
+          <div
+            role="radiogroup"
+            aria-label={t('SAMPLE interval', 'SAMPLE の間隔')}
+            style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '4px 0' }}
+          >
+            {SAMPLE_CHOICES.map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                role="radio"
+                aria-checked={sampleS === choice}
+                data-testid={`telemetry-interval-${choice}`}
+                onClick={() => setSampleS(choice)}
+                style={{ ...lessonChoice(sampleS === choice), minHeight: 44 }}
+              >
+                {t(`${choice} s`, `${choice} 秒`)}
+              </button>
+            ))}
           </div>
           <Bars
-            series={stream}
+            series={sampled}
             testId="telemetry-stream"
             label={t(
-              `Ten-second readings: at most ${peak(stream)} %`,
-              `10 秒ごとの値：最大 ${peak(stream)} %`,
+              `${sampleS}-second readings: at most ${peak(sampled)} %`,
+              `${sampleS} 秒ごとの値：最大 ${peak(sampled)} %`,
             )}
           />
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges lessonId="telemetry" challenges={telemetryChallenges(sampleS)} />
       ) : null}
 
       {revealed ? (

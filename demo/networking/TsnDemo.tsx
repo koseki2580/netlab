@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -25,6 +26,7 @@ import {
   type RateMbps,
   type Scheme,
 } from './tsn';
+import { tsnChallenges } from './tsnChallenges';
 
 /** The lesson's scene: one 1 Gb/s egress port. */
 const RATE: RateMbps = 1000;
@@ -495,6 +497,10 @@ function TsnLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {secondShown ? (
+        <LessonChallenges lessonId="tsn" challenges={tsnChallenges({ rate, hops })} />
       ) : null}
     </div>
   );

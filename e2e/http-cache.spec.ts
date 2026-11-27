@@ -32,3 +32,28 @@ test('TC-2169: no-cache revalidates to a 304, the CDN answers the image itself, 
   await expect(page.getByTestId('cache-row-style')).toHaveAttribute('data-browser', 'fresh');
   await expect(page.getByTestId('cache-row-style')).toHaveAttribute('data-version', '1');
 });
+
+test('TC-2689: after the reveal, deploying and moving the last visit to 60 min reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/http-cache');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('cache-guess-revalidate').click();
+  await page.getByTestId('cache-reveal-button').click();
+  const first = page.getByTestId('challenge-new-style');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-new-style-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-new-style-hint-button').click();
+  await expect(page.getByTestId('challenge-new-style-hint')).toBeVisible();
+  await page.getByTestId('cache-deploy').click();
+  await page.getByTestId('cache-last-visit').fill('3600');
+  await page.getByTestId('cache-time-last').click();
+  await expect(page.getByTestId('cache-row-style')).toHaveAttribute('data-version', '2');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-new-style-why')).toBeVisible();
+  // A copy an hour old is also revalidated by the browser and answered by the CDN,
+  // so the same load reaches cdn-304 too: the count counts both.
+  await expect(page.getByTestId('challenge-cdn-304')).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '2');
+});

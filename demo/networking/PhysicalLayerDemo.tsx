@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_BUTTON,
   LESSON_CARD,
@@ -23,6 +24,7 @@ import {
   type PortSetting,
   type SideResult,
 } from './physicalLayer';
+import { physicalLayerChallenges } from './physicalLayerChallenges';
 
 type SettingKey = 'auto' | '100-full' | '100-half' | '10-full' | '10-half';
 const SETTINGS: readonly SettingKey[] = ['auto', '100-full', '100-half', '10-full', '10-half'];
@@ -244,6 +246,12 @@ function DuplexPart() {
             )}
           </p>
         </div>
+      ) : null}
+      {revealed ? (
+        <LessonChallenges
+          lessonId="physical-layer"
+          challenges={physicalLayerChallenges({ a: toSetting(a), b: toSetting(b), loadPct: load })}
+        />
       ) : null}
     </>
   );

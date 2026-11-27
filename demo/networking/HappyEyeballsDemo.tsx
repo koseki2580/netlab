@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -21,6 +22,7 @@ import {
   type Outcome,
   type Scenario,
 } from './happyEyeballs';
+import { DELAY_RANGE_MS, happyEyeballsChallenges } from './happyEyeballsChallenges';
 
 type Answer = 'v6-fast' | 'v4-fast' | 'v4-slow' | 'never';
 const ANSWERS: readonly Answer[] = ['v6-fast', 'v4-fast', 'v4-slow', 'never'];
@@ -47,6 +49,7 @@ function HappyEyeballsLesson() {
   const [guess, setGuess] = useState<Answer | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [site, setSite] = useState<(typeof SITES)[number]>(SITES[0]);
+  const [delayMs, setDelayMs] = useState(ATTEMPT_DELAY_MS);
   const broken = happyEyeballs('v6-broken');
   const truth = answerOf(broken);
   const scenarioName = (scenario: Scenario) =>
@@ -152,6 +155,28 @@ function HappyEyeballsLesson() {
 
       {revealed ? (
         <div style={LESSON_CARD} data-testid="he-table">
+          <label
+            style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginBottom: 8,
+            }}
+          >
+            {t('Connection Attempt Delay', '接続試行の待ち時間（Connection Attempt Delay）')}
+            <input
+              type="range"
+              min={DELAY_RANGE_MS.min}
+              max={DELAY_RANGE_MS.max}
+              step={DELAY_RANGE_MS.step}
+              value={delayMs}
+              data-testid="he-delay"
+              onChange={(event) => setDelayMs(Number(event.target.value))}
+              style={{ minHeight: 44 }}
+            />
+            <span style={{ fontFamily: 'monospace' }}>{`${delayMs} ms`}</span>
+          </label>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -164,7 +189,7 @@ function HappyEyeballsLesson() {
               </thead>
               <tbody>
                 {SCENARIOS.map((scenario) => {
-                  const happy = happyEyeballs(scenario);
+                  const happy = happyEyeballs(scenario, delayMs);
                   const naive = oneAtATime(scenario);
                   const { v6, v4 } = RTT[scenario];
                   return (
@@ -202,6 +227,10 @@ function HappyEyeballsLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges lessonId="happy-eyeballs" challenges={happyEyeballsChallenges(delayMs)} />
       ) : null}
 
       {revealed ? (

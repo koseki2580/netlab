@@ -42,3 +42,23 @@ test('TC-1823: a wrong prediction is marked, and in the rush voice uses LTE and 
     'true',
   );
 });
+
+test('TC-2677: after the reveal, a 1 % loss limit moves video to LTE in the rush and reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/sd-wan');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('sdwan-guess-lte').click();
+  await page.getByTestId('sdwan-reveal-button').click();
+  const first = page.getByTestId('challenge-rush-off-mpls');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-rush-off-mpls-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-rush-off-mpls-hint-button').click();
+  await expect(page.getByTestId('challenge-rush-off-mpls-hint')).toBeVisible();
+  await page.getByTestId('sdwan-video-loss').fill('1');
+  await expect(page.getByTestId('sdwan-cell-lte-video')).toHaveAttribute('data-chosen', 'true');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-rush-off-mpls-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

@@ -30,3 +30,23 @@ test('TC-2568: the defaults fail over after 63 s, Path.Max.Retrans 2 after 7 s, 
   await expect(page.getByTestId('sctp-msg-B3')).toHaveAttribute('data-sctp-delay', '180');
   await expect(page.getByTestId('sctp-msg-A3')).toHaveAttribute('data-sctp-delay', '0');
 });
+
+test('TC-2661: after the reveal, lowering only RTO.Min to 100 ms reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/sctp');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('sctp-guess-five').click();
+  await page.getByTestId('sctp-reveal-button').click();
+  const first = page.getByTestId('challenge-rto-min-only');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-rto-min-only-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-rto-min-only-hint-button').click();
+  await expect(page.getByTestId('challenge-rto-min-only-hint')).toBeVisible();
+  await page.getByTestId('sctp-rto-min').fill('100');
+  await expect(page.getByTestId('sctp-failover')).toHaveAttribute('data-failover-ms', '6300');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-rto-min-only-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

@@ -40,3 +40,23 @@ test('TC-2028: DNS steering through a London resolver sends Osaka to Frankfurt; 
   await expect(osaka).toHaveAttribute('data-server', 'site-tyo');
   await expect(osaka).toHaveAttribute('data-rtt', '12');
 });
+
+test('TC-2681: after the reveal, withdrawing Frankfurt reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/anycast');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('any-guess-fra').click();
+  await page.getByTestId('any-reveal-button').click();
+  const first = page.getByTestId('challenge-singapore-near');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-singapore-near-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-singapore-near-hint-button').click();
+  await expect(page.getByTestId('challenge-singapore-near-hint')).toBeVisible();
+  await page.getByTestId('any-down-site-fra').click();
+  await expect(page.getByTestId('any-row-isp-sg')).toHaveAttribute('data-rtt', '74');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-singapore-near-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

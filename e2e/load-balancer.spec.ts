@@ -28,3 +28,22 @@ test('TC-1794: least connections evens out the long requests; a down server gets
   await expect(page.getByTestId('lb-sent')).toContainText('203.0.113.10:80');
   await expect(page.getByTestId('lb-sent')).toContainText('書き換え');
 });
+
+test('TC-2683: after the reveal, least connections with every server in reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/load-balancer');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('lb-guess-round-robin').click();
+  await page.getByTestId('lb-reveal-button').click();
+  const first = page.getByTestId('challenge-busiest-two');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-busiest-two-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-busiest-two-hint-button').click();
+  await expect(page.getByTestId('challenge-busiest-two-hint')).toBeVisible();
+  await page.getByTestId('lb-algorithm-least-connections').click();
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-busiest-two-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

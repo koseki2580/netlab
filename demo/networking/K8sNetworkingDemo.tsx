@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -24,6 +25,7 @@ import {
   type Target,
   type Trace,
 } from './k8sNetworking';
+import { k8sNetworkingChallenges } from './k8sNetworkingChallenges';
 
 type First = 'pod' | 'node' | 'cluster-ip';
 const FIRSTS: readonly First[] = ['node', 'cluster-ip', 'pod'];
@@ -538,6 +540,13 @@ function K8sNetworkingLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {localShown ? (
+        <LessonChallenges
+          lessonId="k8s-networking"
+          challenges={k8sNetworkingChallenges({ target, entry, policy })}
+        />
       ) : null}
     </div>
   );

@@ -7,9 +7,11 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
-import { BASE_RTT_MS, MARK_THRESHOLD, SCENARIOS, simulate, type L4sScenario } from './l4s';
+import { BASE_RTT_MS, BUFFER, MARK_THRESHOLD, SCENARIOS, simulate, type L4sScenario } from './l4s';
+import { BUFFER_RANGE, l4sChallenges } from './l4sChallenges';
 
 const NAMES: Record<L4sScenario, readonly [string, string]> = {
   'classic-deep': ['Classic TCP, deep buffer', '従来の TCP・深いバッファ'],
@@ -28,9 +30,9 @@ const CHART_H = 120;
 const CHART_MAX_MS = 20;
 
 /** The queueing delay, round by round, as a line. */
-function DelayChart({ scenario }: { scenario: L4sScenario }) {
+function DelayChart({ scenario, buffer }: { scenario: L4sScenario; buffer: number }) {
   const t = useT();
-  const outcome = useMemo(() => simulate(scenario), [scenario]);
+  const outcome = useMemo(() => simulate(scenario, buffer), [scenario, buffer]);
   const step = CHART_W / (outcome.rounds.length - 1);
   const points = outcome.rounds
     .map(
@@ -87,6 +89,8 @@ function L4sLesson() {
   const [guess, setGuess] = useState<L4sScenario | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [shown, setShown] = useState<L4sScenario>('classic-deep');
+  const [buffer, setBuffer] = useState(BUFFER['classic-deep']);
+  const mine = simulate(shown, buffer);
   const outcomes = useMemo(
     () =>
       Object.fromEntries(SCENARIOS.map((id) => [id, simulate(id)])) as Record<
@@ -225,7 +229,10 @@ function L4sLesson() {
                 role="tab"
                 aria-selected={shown === id}
                 data-testid={`l4s-show-${id}`}
-                onClick={() => setShown(id)}
+                onClick={() => {
+                  setShown(id);
+                  setBuffer(BUFFER[id]);
+                }}
                 style={lessonChoice(shown === id)}
               >
                 {t(...NAMES[id])}
@@ -235,7 +242,34 @@ function L4sLesson() {
           <p style={{ margin: '10px 0 4px', fontSize: 13, fontWeight: 700 }}>
             {t(`Shown: ${NAMES[shown][0]}`, `表示中：${NAMES[shown][1]}`)}
           </p>
-          <DelayChart scenario={shown} />
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+            {t('Its buffer', 'このバッファ')}
+            <input
+              type="range"
+              min={BUFFER_RANGE.min}
+              max={BUFFER_RANGE.max}
+              step={BUFFER_RANGE.step}
+              value={buffer}
+              data-testid="l4s-buffer"
+              onChange={(event) => setBuffer(Number(event.target.value))}
+              style={{ minHeight: 44 }}
+            />
+            <span style={{ fontFamily: 'monospace' }}>
+              {t(`${buffer} packets`, `${buffer} パケット`)}
+            </span>
+          </label>
+          <p
+            data-testid="l4s-mine"
+            data-used={mine.utilisationPct}
+            data-worst={mine.maxDelayMs}
+            style={{ margin: '4px 0', fontSize: 13, fontFamily: 'monospace' }}
+          >
+            {t(
+              `Line used ${mine.utilisationPct} % · delay ${mine.averageDelayMs} / ${mine.maxDelayMs} ms · dropped ${Math.round(mine.drops * 100) / 100}`,
+              `使用率 ${mine.utilisationPct} %・遅延 ${mine.averageDelayMs} / ${mine.maxDelayMs} ms・捨てられた ${Math.round(mine.drops * 100) / 100}`,
+            )}
+          </p>
+          <DelayChart scenario={shown} buffer={buffer} />
           <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--netlab-text-secondary)' }}>
             {t(
               'In a real network L4S and classic traffic share the line through a dual-queue AQM (RFC 9332), which keeps classic flows from being starved. The marks reach the sender in the ACKs, counted by Accurate ECN.',
@@ -243,6 +277,12 @@ function L4sLesson() {
             )}
           </p>
         </div>
+      ) : null}
+      {revealed ? (
+        <LessonChallenges
+          lessonId="l4s"
+          challenges={l4sChallenges({ scenario: shown, bufferPackets: buffer })}
+        />
       ) : null}
     </div>
   );

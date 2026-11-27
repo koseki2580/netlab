@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import { useViewport } from '../../src/utils/useViewport';
@@ -26,6 +27,7 @@ import {
   throughputBps,
   transfer,
 } from './tcpOptions';
+import { tcpOptionsChallenges } from './tcpOptionsChallenges';
 
 type RateAnswer = 'link' | 'hundreds' | 'tens' | 'few';
 const RATE_ANSWERS: readonly RateAnswer[] = ['link', 'hundreds', 'tens', 'few'];
@@ -519,6 +521,13 @@ function TcpOptionsLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="tcp-options"
+          challenges={tcpOptionsChallenges({ rttMs, stripped, lost })}
+        />
       ) : null}
     </div>
   );

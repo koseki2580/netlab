@@ -62,3 +62,22 @@ test('TC-1947: each device lists only the devices at the other end of its own ca
   await expect(rows.nth(0)).toContainText('access-2');
   await expect(rows.nth(0)).toContainText('Gi1/0/17');
 });
+
+test('TC-2673: after the reveal, fixing only the PC at 100 Mbit/s full reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/physical-layer');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('phy-guess-100-half').click();
+  await page.getByTestId('phy-reveal-button').click();
+  const first = page.getByTestId('challenge-pc-only');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-pc-only-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-pc-only-hint-button').click();
+  await expect(page.getByTestId('challenge-pc-only-hint')).toBeVisible();
+  await page.getByTestId('phy-b-setting').selectOption('100-full');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-pc-only-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

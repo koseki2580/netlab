@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -24,6 +25,7 @@ import {
   type CdnOutcome,
   type Row,
 } from './httpCache';
+import { LAST_VISIT, httpCacheChallenges, visits } from './httpCacheChallenges';
 
 type Answer = 'cache' | 'cdn' | 'revalidate' | 'download';
 const ANSWERS: readonly Answer[] = ['revalidate', 'cache', 'cdn', 'download'];
@@ -37,6 +39,8 @@ const cell: React.CSSProperties = {
 const mono: React.CSSProperties = { ...cell, fontFamily: 'monospace', whiteSpace: 'nowrap' };
 
 const clock = (s: number) => (s >= 3600 ? `${s / 3600} h` : s >= 60 ? `${s / 60} min` : `${s} s`);
+/** A visit time: whole hours as the timeline shows them, otherwise minutes. */
+const visitClock = (s: number) => (s % 3600 === 0 ? clock(s) : `${s / 60} min`);
 const kb = (bytes: number) =>
   bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(2)} MB` : `${(bytes / 1000).toFixed(0)} kB`;
 
@@ -52,12 +56,15 @@ function HttpCacheLesson() {
   const t = useT();
   const [guess, setGuess] = useState<Answer | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [time, setTime] = useState<number>(TIMELINE[0]!);
+  // Which visit is shown, by position: the last one moves with the slider.
+  const [slot, setSlot] = useState(0);
+  const [lastVisit, setLastVisit] = useState<number>(LAST_VISIT.max);
   const [deploy, setDeploy] = useState(false);
   const asked = simulate([0, PREDICT_AT])[1]!.rows.find((r) => r.resource.id === 'index')!;
   const truth = answerOf(asked);
-  const steps = simulate(TIMELINE, deploy ? DEPLOY_TIME : null);
-  const step = steps[TIMELINE.indexOf(time)]!;
+  const times = visits(lastVisit);
+  const steps = simulate(times, deploy ? DEPLOY_TIME : null);
+  const step = steps[slot]!;
 
   const answerName = (answer: Answer) =>
     ({
@@ -283,21 +290,43 @@ function HttpCacheLesson() {
             aria-label={t('Time since the first load', '最初の読み込みからの時間')}
             style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}
           >
-            {TIMELINE.map((at) => (
+            {times.map((at, i) => (
               <button
-                key={at}
+                key={TIMELINE[i]}
                 type="button"
                 role="tab"
-                aria-selected={time === at}
-                data-testid={`cache-time-${at}`}
-                onClick={() => setTime(at)}
-                style={{ ...lessonChoice(time === at), minHeight: 44 }}
+                aria-selected={slot === i}
+                data-testid={`cache-time-${i === times.length - 1 ? 'last' : at}`}
+                onClick={() => setSlot(i)}
+                style={{ ...lessonChoice(slot === i), minHeight: 44 }}
               >
-                {time === at ? '✓ ' : ''}
-                {`t = ${clock(at)}`}
+                {slot === i ? '✓ ' : ''}
+                {`t = ${visitClock(at)}`}
               </button>
             ))}
           </div>
+          <label
+            style={{
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginTop: 8,
+            }}
+          >
+            {t('The last visit at', '最後に開く時刻')}
+            <input
+              type="range"
+              min={LAST_VISIT.min}
+              max={LAST_VISIT.max}
+              step={LAST_VISIT.step}
+              value={lastVisit}
+              data-testid="cache-last-visit"
+              onChange={(event) => setLastVisit(Number(event.target.value))}
+              style={{ minHeight: 44 }}
+            />
+            <span style={{ fontFamily: 'monospace' }}>{`t = ${visitClock(lastVisit)}`}</span>
+          </label>
           <button
             type="button"
             role="switch"
@@ -378,6 +407,13 @@ function HttpCacheLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="http-cache"
+          challenges={httpCacheChallenges({ at: times[slot]!, lastVisitS: lastVisit, deploy })}
+        />
       ) : null}
     </div>
   );

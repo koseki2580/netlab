@@ -181,7 +181,7 @@ window.USER_GUIDE_CONTENT = {
         title: "レッスンの読み方",
         html: `<p>多くのレッスンは、図・操作ボタン・結果の3つでできています。</p>
                <p>予想を選ぶレッスンでは、答え合わせのあと、外れた選択に ✗、正解に ✓ が付きます（理解度チェックと同じ印です）。</p>
-               <p>答え合わせのあと、レッスンによっては「自分で起こしてみよう」という挑戦が出ます。予想とは逆に、目標の状態（たとえば「ファイバだけを変えて余裕を 3 dB 以上に戻す」）を、レッスンの操作で自分で作ります。達成したかどうかはレッスンのモデルが今の設定から確かめ、達成すると理由が数字つきで出ます。ヒントは「ヒントを見る」を押したときだけ出ます。達成した挑戦はこのブラウザに残り、「挑戦をやり直す」で最初からやり直せます。MAC 学習のレッスンでは、エージングタイムもスライダーで変えられます。</p>
+               <p>答え合わせのあと、レッスンによっては「自分で起こしてみよう」という挑戦が出ます。予想とは逆に、目標の状態（たとえば「ファイバだけを変えて余裕を 3 dB 以上に戻す」）を、レッスンの操作で自分で作ります。達成したかどうかはレッスンのモデルが今の設定から確かめ、達成すると理由が数字つきで出ます。ヒントは「ヒントを見る」を押したときだけ出ます。達成した挑戦はこのブラウザに残り、「挑戦をやり直す」で最初からやり直せます。挑戦のために、いくつかのレッスンには答え合わせのあとに使えるスライダーがあります。MAC 学習のエージングタイム、L4S のバッファ、Happy Eyeballs の待ち時間、QoS のバケットの深さ（Bc）、SD-WAN のビデオ会議の損失の上限、テレメトリの SAMPLE の間隔、BGP グレースフルリスタートの Restart Time、HTTP キャッシュの最後に開く時刻です。</p>
                <ul>
                  <li><strong>図</strong> — 機器とケーブルです。機器を押すと詳細が開きます。右下のボタンで拡大・縮小・全体表示ができます。</li>
                  <li><strong>パケットタイムライン</strong> — 送ったパケットが通った順に並びます。行を押すと、その時点のパケットの中身が見られます。</li>
@@ -598,7 +598,7 @@ window.USER_GUIDE_CONTENT = {
         title: "Reading a lesson",
         html: `<p>Most lessons are a diagram, some controls, and a result.</p>
                <p>In a lesson that asks for a prediction, after the reveal a wrong choice is marked ✗ and the right one ✓, as in the concept checks.</p>
-               <p>After the reveal, some lessons offer challenges under “Now make it happen”: the reverse of a prediction, where you reach a goal (for example “bring the margin back to 3 dB by changing only the fibre”) with the lesson’s own controls. The lesson’s model checks the current settings and, once a goal is reached, explains why with its numbers. A hint appears only when you ask for it. Reached challenges are kept in this browser; “Start the challenges again” clears them. In the MAC learning lesson the ageing time is a slider too.</p>
+               <p>After the reveal, some lessons offer challenges under “Now make it happen”: the reverse of a prediction, where you reach a goal (for example “bring the margin back to 3 dB by changing only the fibre”) with the lesson’s own controls. The lesson’s model checks the current settings and, once a goal is reached, explains why with its numbers. A hint appears only when you ask for it. Reached challenges are kept in this browser; “Start the challenges again” clears them. For the challenges, some lessons gain a control after the reveal: the ageing time in MAC learning, the buffer in L4S, the attempt delay in Happy Eyeballs, the bucket depth (Bc) in QoS, video's loss limit in SD-WAN, the SAMPLE interval in telemetry, the Restart Time in BGP graceful restart, and the last visit in HTTP caching.</p>
                <ul>
                  <li><strong>The diagram</strong> — machines and cables. Press a machine to open its detail. The buttons at the bottom right zoom and fit.</li>
                  <li><strong>The packet timeline</strong> — every step in order. Press a row to see what the packet looked like at that point.</li>

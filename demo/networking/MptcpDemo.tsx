@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -22,10 +23,10 @@ import {
   windowKb,
   type Failover,
 } from './mptcp';
+import { ASKED_LOSS_S, mptcpChallenges } from './mptcpChallenges';
 
 type Answer = 'breaks' | 'slower' | 'same' | 'waits';
 const ANSWERS: readonly Answer[] = ['breaks', 'waits', 'slower', 'same'];
-const ASKED_LOSS_S = 4;
 
 const cell: React.CSSProperties = {
   padding: 4,
@@ -510,6 +511,13 @@ function MptcpLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="mptcp"
+          challenges={mptcpChallenges({ lossAtS, stripped, subflows, coupled })}
+        />
       ) : null}
     </div>
   );

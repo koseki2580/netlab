@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -27,6 +28,12 @@ import {
   shape,
   type Scheduler,
 } from './qosQueuing';
+import {
+  DEPTH_MAX_KBIT,
+  DEPTH_MIN_KBIT,
+  DEPTH_STEP_KBIT,
+  qosQueuingChallenges,
+} from './qosQueuingChallenges';
 
 type ConditionGuess = 'policer-drops' | 'shaper-drops' | 'both-drop' | 'neither';
 const CONDITION_GUESSES: readonly ConditionGuess[] = [
@@ -187,6 +194,10 @@ function QosQueuingLesson() {
   const [conditionGuess, setConditionGuess] = useState<ConditionGuess | null>(null);
   const [conditionShown, setConditionShown] = useState(false);
   const [view, setView] = useState<'police' | 'shape'>('police');
+  const [depthKbit, setDepthKbit] = useState(DEPTH_MIN_KBIT);
+  // The reveal speaks of the asked 100 kbit bucket; the slider changes only what is shown after it.
+  const policedAt = useMemo(() => police(traffic, CIR_BPS, depthKbit * 1000), [traffic, depthKbit]);
+  const shapedAt = useMemo(() => shape(traffic, CIR_BPS, depthKbit * 1000), [traffic, depthKbit]);
 
   const [delayGuess, setDelayGuess] = useState<DelayGuess | null>(null);
   const [delayShown, setDelayShown] = useState(false);
@@ -195,6 +206,10 @@ function QosQueuingLesson() {
   const fifo = useMemo(() => runLink({ scheduler: 'fifo', rogueEf: false }), []);
   const link = useMemo(() => runLink({ scheduler, rogueEf }), [scheduler, rogueEf]);
   const delayTruth = delayBucket(fifo.voice.maxDelayUs / 1000);
+  const challenges = useMemo(
+    () => qosQueuingChallenges({ depthKbit, scheduler, rogueEf }),
+    [depthKbit, scheduler, rogueEf],
+  );
 
   const conditionTruth: ConditionGuess =
     policed.droppedPackets > 0 && shaped.droppedPackets === 0 ? 'policer-drops' : 'both-drop';
@@ -303,6 +318,30 @@ function QosQueuingLesson() {
                 </button>
               ))}
             </div>
+            <label
+              style={{
+                display: 'flex',
+                gap: 6,
+                alignItems: 'center',
+                marginTop: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              {t('Bucket depth (Bc)', 'バケットの深さ（Bc）')}
+              <input
+                type="range"
+                min={DEPTH_MIN_KBIT}
+                max={DEPTH_MAX_KBIT}
+                step={DEPTH_STEP_KBIT}
+                value={depthKbit}
+                data-testid="qq-depth"
+                onChange={(event) => setDepthKbit(Number(event.target.value))}
+                style={{ minHeight: 44 }}
+              />
+              <span style={{ fontFamily: 'monospace' }} data-testid="qq-depth-value">
+                {`${depthKbit} kbit`}
+              </span>
+            </label>
             <TickChart
               testId="qq-condition-chart"
               unit="Mbit/s"
@@ -314,7 +353,7 @@ function QosQueuingLesson() {
               series={[
                 { values: offered, color: 'var(--netlab-text-secondary)', dashed: true },
                 {
-                  values: sentPerTick(view === 'police' ? policed : shaped),
+                  values: sentPerTick(view === 'police' ? policedAt : shapedAt),
                   color:
                     view === 'police' ? 'var(--netlab-accent-orange)' : 'var(--netlab-accent-cyan)',
                 },
@@ -324,47 +363,47 @@ function QosQueuingLesson() {
               rows={[
                 [
                   t('Policer: delivered', 'ポリサー：届いた'),
-                  `${policed.deliveredPackets} / ${policed.offeredPackets}`,
+                  `${policedAt.deliveredPackets} / ${policedAt.offeredPackets}`,
                   'police-delivered',
                 ],
                 [
                   t('Policer: dropped', 'ポリサー：捨てた'),
-                  String(policed.droppedPackets),
+                  String(policedAt.droppedPackets),
                   'police-dropped',
                 ],
                 [
                   t('Policer: longest hold', 'ポリサー：最大の待ち'),
-                  ms(policed.maxDelayUs),
+                  ms(policedAt.maxDelayUs),
                   'police-delay',
                 ],
                 [
                   t('Policer: average rate', 'ポリサー：平均レート'),
-                  mbps(runMbps(policed.deliveredBytes), 2),
+                  mbps(runMbps(policedAt.deliveredBytes), 2),
                   'police-rate',
                 ],
                 [
                   t('Shaper: delivered', 'シェーパー：届いた'),
-                  `${shaped.deliveredPackets} / ${shaped.offeredPackets}`,
+                  `${shapedAt.deliveredPackets} / ${shapedAt.offeredPackets}`,
                   'shape-delivered',
                 ],
                 [
                   t('Shaper: dropped', 'シェーパー：捨てた'),
-                  String(shaped.droppedPackets),
+                  String(shapedAt.droppedPackets),
                   'shape-dropped',
                 ],
                 [
                   t('Shaper: longest hold', 'シェーパー：最大の待ち'),
-                  ms(shaped.maxDelayUs),
+                  ms(shapedAt.maxDelayUs),
                   'shape-delay',
                 ],
                 [
                   t('Shaper: most queued', 'シェーパー：最大のキュー'),
-                  `${shaped.maxQueueBytes / 1000} KB`,
+                  `${shapedAt.maxQueueBytes / 1000} KB`,
                   'shape-queue',
                 ],
                 [
                   t('Shaper: average rate', 'シェーパー：平均レート'),
-                  mbps(runMbps(shaped.deliveredBytes), 2),
+                  mbps(runMbps(shapedAt.deliveredBytes), 2),
                   'shape-rate',
                 ],
               ]}
@@ -543,6 +582,8 @@ function QosQueuingLesson() {
           </button>
         )}
       </div>
+
+      {conditionShown ? <LessonChallenges lessonId="qos-queuing" challenges={challenges} /> : null}
     </div>
   );
 }

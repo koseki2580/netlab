@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -23,6 +24,7 @@ import {
   type Failover,
   type MessageId,
 } from './sctp';
+import { sctpChallenges } from './sctpChallenges';
 
 type FailoverAnswer = 'one' | 'five' | 'thirty-one' | 'sixty-three';
 const FAILOVER_ANSWERS: readonly FailoverAnswer[] = ['one', 'five', 'thirty-one', 'sixty-three'];
@@ -340,6 +342,13 @@ function SctpLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {revealed ? (
+        <LessonChallenges
+          lessonId="sctp"
+          challenges={sctpChallenges({ pathMaxRetrans, rtoMinMs })}
+        />
       ) : null}
 
       <div style={LESSON_CARD} data-testid="sctp-hol-predict">

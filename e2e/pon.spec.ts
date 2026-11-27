@@ -49,3 +49,25 @@ test('TC-2558: the OLT grants upstream time; over capacity the small demand is m
   await expect(page.getByTestId('pn-grant-1')).toHaveAttribute('data-grant', '1000');
   await expect(page.getByTestId('pn-grant-3')).toHaveAttribute('data-grant', '4000');
 });
+
+test('TC-2657: after the loss reveal, 1:64 with two connectors over 20 km reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/pon');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('pn-loss-guess-stages').click();
+  await page.getByTestId('pn-loss-reveal-button').click();
+  const first = page.getByTestId('challenge-split-64');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-split-64-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-split-64-hint-button').click();
+  await expect(page.getByTestId('challenge-split-64-hint')).toBeVisible();
+  await page.getByTestId('pn-split-64').click();
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await page.getByTestId('pn-connectors').fill('2');
+  await expect(page.getByTestId('pn-budget')).toHaveAttribute('data-total', '29');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-split-64-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

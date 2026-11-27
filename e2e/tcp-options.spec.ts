@@ -49,3 +49,23 @@ test('TC-2139: three losses take 3 round trips without SACK and 1 with it, and t
   await expect(page.getByTestId('tcpo-recovery-newreno')).toHaveAttribute('data-rounds', '4');
   await expect(page.getByTestId('tcpo-recovery-sack')).toHaveAttribute('data-rounds', '1');
 });
+
+test('TC-2687: after the reveal, stripping the option at a 50 ms round trip reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/tcp-options');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('tcpo-guess-few').click();
+  await page.getByTestId('tcpo-reveal-button').click();
+  const first = page.getByTestId('challenge-stripped-longest');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-stripped-longest-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-stripped-longest-hint-button').click();
+  await expect(page.getByTestId('challenge-stripped-longest-hint')).toBeVisible();
+  await page.getByTestId('tcpo-strip-on').click();
+  await page.getByTestId('tcpo-rtt').fill('50');
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-stripped-longest-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

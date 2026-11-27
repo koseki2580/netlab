@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -25,6 +26,7 @@ import {
   type Mode,
   type Tag,
 } from './qinq';
+import { qinqChallenges } from './qinqChallenges';
 
 type SizeAnswer = 'same' | 'plus-tag' | 'plus-header';
 const SIZE_ANSWERS: readonly SizeAnswer[] = ['same', 'plus-tag', 'plus-header'];
@@ -538,6 +540,13 @@ function QinqLesson() {
           />
         )}
       </div>
+
+      {sizeRevealed && whoRevealed ? (
+        <LessonChallenges
+          lessonId="qinq"
+          challenges={qinqChallenges({ payload, coreLimit, customer, mode })}
+        />
+      ) : null}
 
       <div style={LESSON_CARD} data-testid="qq-count">
         <div style={LESSON_LABEL}>{t('Predict: how many VLANs', '予想：VLAN はいくつ')}</div>

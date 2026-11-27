@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -17,6 +18,7 @@ import {
   type Outcome,
   type RouteState,
 } from './bgpGracefulRestart';
+import { bgpGracefulRestartChallenges } from './bgpGracefulRestartChallenges';
 
 type CpAnswer = 'both' | 'without-only' | 'with-only' | 'neither';
 const CP_ANSWERS: readonly CpAnswer[] = ['both', 'without-only', 'with-only', 'neither'];
@@ -105,6 +107,7 @@ function BgpGracefulRestartLesson() {
   const [cpGuess, setCpGuess] = useState<CpAnswer | null>(null);
   const [cpRevealed, setCpRevealed] = useState(false);
   const [cpRestartMs, setCpRestartMs] = useState<number>(LESSON_DEFAULTS.cpRestartMs);
+  const [cpRestartTimeMs, setCpRestartTimeMs] = useState<number>(LESSON_DEFAULTS.restartTimeMs);
   const [deadGuess, setDeadGuess] = useState<DeadAnswer | null>(null);
   const [deadRevealed, setDeadRevealed] = useState(false);
   const [restartTimeMs, setRestartTimeMs] = useState<number>(LESSON_DEFAULTS.restartTimeMs);
@@ -125,7 +128,7 @@ function BgpGracefulRestartLesson() {
         ? 'with-only'
         : 'neither';
   const tunedNoGr = simulate(scenario({ gr: false, cpRestartMs }));
-  const tunedGr = simulate(scenario({ gr: true, cpRestartMs }));
+  const tunedGr = simulate(scenario({ gr: true, cpRestartMs, restartTimeMs: cpRestartTimeMs }));
 
   // Part 2: R1 dies entirely; a backup path through R3.
   const dead = (gr: boolean, detection: Detection, rt: number = d.restartTimeMs) =>
@@ -307,13 +310,47 @@ function BgpGracefulRestartLesson() {
             />
             <span style={{ fontFamily: 'monospace' }}>{t(en(cpRestartMs), ja(cpRestartMs))}</span>
           </label>
+          <label
+            style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginTop: 8,
+            }}
+          >
+            {t('Restart Time (with GR)', 'Restart Time（GR あり）')}
+            <input
+              type="range"
+              min={30_000}
+              max={300_000}
+              step={30_000}
+              value={cpRestartTimeMs}
+              data-testid="bgpgr-cp-restart-time"
+              onChange={(event) => setCpRestartTimeMs(Number(event.target.value))}
+              style={{ minHeight: 44 }}
+            />
+            <span style={{ fontFamily: 'monospace' }}>
+              {t(en(cpRestartTimeMs), ja(cpRestartTimeMs))}
+            </span>
+          </label>
           <p style={{ margin: '8px 0 0', lineHeight: 1.7 }}>
             {t(
-              `The Restart Time is R1’s promise of how soon its session will be back. If it is not back within ${en(d.restartTimeMs)}, R2 deletes the stale routes and traffic is lost from then on until End-of-RIB.`,
-              `Restart Time は、セッションがいつまでに戻るかという R1 の約束です。${ja(d.restartTimeMs)}以内に戻らなければ、R2 は stale の経路を消し、そこから End-of-RIB まで通信は失われます。`,
+              `The Restart Time is R1’s promise of how soon its session will be back. If it is not back within ${en(cpRestartTimeMs)}, R2 deletes the stale routes and traffic is lost from then on until End-of-RIB.`,
+              `Restart Time は、セッションがいつまでに戻るかという R1 の約束です。${ja(cpRestartTimeMs)}以内に戻らなければ、R2 は stale の経路を消し、そこから End-of-RIB まで通信は失われます。`,
             )}
           </p>
         </div>
+      ) : null}
+
+      {cpRevealed ? (
+        <LessonChallenges
+          lessonId="bgp-graceful-restart"
+          challenges={bgpGracefulRestartChallenges({
+            cpRestartMs,
+            restartTimeMs: cpRestartTimeMs,
+          })}
+        />
       ) : null}
 
       <div style={LESSON_CARD} data-testid="bgpgr-dead-predict">

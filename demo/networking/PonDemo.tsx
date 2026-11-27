@@ -7,6 +7,7 @@ import {
   lessonChoice,
   predictionMark,
 } from '../components/lessonStyles';
+import { LessonChallenges } from '../components/LessonChallenges';
 import DemoShell from '../DemoShell';
 import { useT } from '../localeContext';
 import {
@@ -25,6 +26,7 @@ import {
   type OpticalClass,
   type TechId,
 } from './pon';
+import { ponChallenges } from './ponChallenges';
 
 const SPLIT = 32;
 const ASKED_PLANT = { split: SPLIT, km: 20, connectors: 4 };
@@ -650,6 +652,10 @@ function PonLesson() {
             )}
           </p>
         </div>
+      ) : null}
+
+      {lossRevealed ? (
+        <LessonChallenges lessonId="pon" challenges={ponChallenges({ plant, classId })} />
       ) : null}
 
       <div style={LESSON_CARD} data-testid="pn-up-card">

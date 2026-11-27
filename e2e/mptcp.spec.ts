@@ -40,3 +40,22 @@ test('TC-2189: on a shared bottleneck uncoupled subflows take 67 % (80 % with fo
   await expect(page.getByTestId('mptcp-share')).toHaveAttribute('data-pct', '50');
   await expect(page.getByTestId('mptcp-share')).toHaveAttribute('data-tcp', '15');
 });
+
+test('TC-2685: after the reveal, stripping MP_CAPABLE with Wi-Fi lost at 4 s reaches the first challenge', async ({
+  page,
+  demoPage,
+}) => {
+  await demoPage.goto('/networking/mptcp');
+  await expect(page.getByTestId('challenges')).toHaveCount(0);
+  await page.getByTestId('mptcp-guess-slower').click();
+  await page.getByTestId('mptcp-reveal-button').click();
+  const first = page.getByTestId('challenge-break-it');
+  await expect(first).toHaveAttribute('data-reached', 'false');
+  await expect(page.getByTestId('challenge-break-it-hint')).toHaveCount(0);
+  await page.getByTestId('challenge-break-it-hint-button').click();
+  await expect(page.getByTestId('challenge-break-it-hint')).toBeVisible();
+  await page.getByTestId('mptcp-option-stripped').click();
+  await expect(first).toHaveAttribute('data-reached', 'true');
+  await expect(page.getByTestId('challenge-break-it-why')).toBeVisible();
+  await expect(page.getByTestId('challenges-count')).toHaveAttribute('data-reached', '1');
+});

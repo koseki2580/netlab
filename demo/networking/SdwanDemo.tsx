@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LessonChallenges } from '../components/LessonChallenges';
 import {
   LESSON_CARD,
   LESSON_LABEL,
@@ -10,6 +11,13 @@ import {
 import DemoShell from '../DemoShell';
 import { useGalleryLocale, useT } from '../localeContext';
 import { PERIODS, POLICIES, UPLINKS, choose, meets, misses, type Uplink } from './sdwan';
+import {
+  LOSS_MAX_PCT,
+  LOSS_STEP_PCT,
+  VIDEO_LOSS_PCT,
+  sdwanChallenges,
+  videoPolicy,
+} from './sdwanChallenges';
 
 const PERIOD_NAMES: readonly (readonly [string, string])[] = [
   ['09:00', '09:00'],
@@ -31,6 +39,11 @@ function SdwanLesson() {
   const [period, setPeriod] = useState(0);
   const [guess, setGuess] = useState<Uplink['id'] | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [videoLossPct, setVideoLossPct] = useState(VIDEO_LOSS_PCT);
+  // After the reveal the learner may change video meetings' loss limit; the reveal itself uses the policies as given.
+  const livePolicies = POLICIES.map((policy) =>
+    policy.id === 'video' ? videoPolicy(videoLossPct) : policy,
+  );
   const voice = POLICIES.find((policy) => policy.id === 'voice')!;
   const voiceInRush = choose(voice, 1);
   const linkName = (id: Uplink['id']) => UPLINKS.find((link) => link.id === id)!.name[locale];
@@ -168,12 +181,36 @@ function SdwanLesson() {
               </button>
             ))}
           </div>
+          <label
+            style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              marginTop: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            {t('Video meetings may lose at most', 'ビデオ会議が許す損失の上限')}
+            <input
+              type="range"
+              min={0}
+              max={LOSS_MAX_PCT}
+              step={LOSS_STEP_PCT}
+              value={videoLossPct}
+              data-testid="sdwan-video-loss"
+              onChange={(event) => setVideoLossPct(Number(event.target.value))}
+              style={{ minHeight: 44 }}
+            />
+            <span style={{ fontFamily: 'monospace' }} data-testid="sdwan-video-loss-value">
+              {`${videoLossPct} %`}
+            </span>
+          </label>
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 8 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--netlab-text-secondary)' }}>
                 <th style={cell}>{t('Link', '回線')}</th>
                 <th style={cell}>{t('Measured', '測定値')}</th>
-                {POLICIES.map((policy) => (
+                {livePolicies.map((policy) => (
                   <th key={policy.id} style={cell}>
                     {policy.name[locale]}
                   </th>
@@ -189,7 +226,7 @@ function SdwanLesson() {
                     <td
                       style={{ ...cell, fontFamily: 'monospace' }}
                     >{`${sample.latencyMs} / ${sample.jitterMs} / ${sample.lossPct}`}</td>
-                    {POLICIES.map((policy) => {
+                    {livePolicies.map((policy) => {
                       const chosen = choose(policy, period) === link.id;
                       const ok = meets(sample, policy);
                       return (
@@ -225,6 +262,12 @@ function SdwanLesson() {
             )}
           </p>
         </div>
+      ) : null}
+      {revealed ? (
+        <LessonChallenges
+          lessonId="sd-wan"
+          challenges={sdwanChallenges({ period, videoLossPct })}
+        />
       ) : null}
     </div>
   );
