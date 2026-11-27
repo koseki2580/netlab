@@ -82,6 +82,15 @@ export const EXAM_LEVEL_4: ExamLevel = {
       },
     },
     {
+      id: 'route-reflector',
+      path: lessonPath('/networking/route-reflector'),
+      title: { en: 'iBGP scaling and route reflectors', ja: 'iBGP のスケールとルートリフレクタ' },
+      teaches: {
+        en: 'Which routers of an AS a route reaches',
+        ja: '経路が AS 内のどのルータまで届くか',
+      },
+    },
+    {
       id: 'ospf-convergence',
       path: lessonPath('/routing/ospf-convergence'),
       title: { en: 'OSPF Convergence', ja: 'OSPF の収束' },
@@ -115,6 +124,15 @@ export const EXAM_LEVEL_4: ExamLevel = {
       teaches: {
         en: 'The two parts of the time a packet takes to cross a link',
         ja: 'パケットがリンクを渡るのにかかる時間の、2 つの内訳',
+      },
+    },
+    {
+      id: 'lossless-dc',
+      path: lessonPath('/networking/lossless-dc'),
+      title: { en: 'Lossless Ethernet for RoCEv2', ja: 'RoCEv2 のためのロスレス Ethernet' },
+      teaches: {
+        en: 'Many senders into one switch port',
+        ja: '1 つのスイッチポートへ一斉に送る多くの送信元',
       },
     },
     {

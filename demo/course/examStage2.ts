@@ -24,6 +24,15 @@ export const EXAM_STAGE_2: ExamLevel = {
       },
     },
     {
+      id: 'mac-learning',
+      path: lessonPath('/networking/mac-learning'),
+      title: { en: 'MAC learning', ja: 'MAC アドレス学習' },
+      teaches: {
+        en: 'Which ports a switch sends a frame out of',
+        ja: 'スイッチがフレームをどのポートから出すか',
+      },
+    },
+    {
       id: 'arp',
       path: lessonPath('/networking/arp'),
       title: { en: 'ARP basics', ja: 'ARP の基本' },
@@ -39,6 +48,15 @@ export const EXAM_STAGE_2: ExamLevel = {
       teaches: {
         en: 'Splitting one switch into separate networks',
         ja: '1 台のスイッチを別々のネットワークに分けること',
+      },
+    },
+    {
+      id: 'optical',
+      path: lessonPath('/networking/optical'),
+      title: { en: 'Optical link budgets and DWDM', ja: '光リンクバジェットと DWDM' },
+      teaches: {
+        en: 'Whether a fibre link comes up',
+        ja: '光ファイバのリンクが上がるかどうか',
       },
     },
   ],

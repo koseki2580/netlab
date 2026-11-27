@@ -91,12 +91,30 @@ export const EXAM_LEVEL_2: ExamLevel = {
       },
     },
     {
+      id: 'time-sync',
+      path: lessonPath('/networking/time-sync'),
+      title: { en: 'Time sync: NTP and PTP', ja: '時刻同期：NTP と PTP' },
+      teaches: {
+        en: 'Working out how far apart two clocks are',
+        ja: '2 つの時計のずれの求め方',
+      },
+    },
+    {
       id: 'ipv6',
       path: lessonPath('/networking/ipv6'),
       title: { en: 'IPv6 Dual-Stack', ja: 'IPv6 デュアルスタック' },
       teaches: {
         en: 'IPv6 addresses alongside IPv4',
         ja: 'IPv4 と並ぶ IPv6 のアドレス',
+      },
+    },
+    {
+      id: 'ipv6-addressing',
+      path: lessonPath('/networking/ipv6-addressing'),
+      title: { en: 'IPv6 addresses and prefixes', ja: 'IPv6 アドレスとプレフィックス' },
+      teaches: {
+        en: 'Cutting a delegated prefix into LANs',
+        ja: '委任されたプレフィックスの LAN への切り分け',
       },
     },
   ],

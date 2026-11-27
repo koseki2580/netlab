@@ -60,6 +60,15 @@ export const EXAM_STAGE_3: ExamLevel = {
         ja: 'リンクの上限より大きいパケット',
       },
     },
+    {
+      id: 'plpmtud',
+      path: lessonPath('/networking/plpmtud'),
+      title: { en: 'PLPMTUD: probing for the path MTU', ja: 'PLPMTUD：プローブで経路 MTU を探す' },
+      teaches: {
+        en: 'Finding the packet size a path carries',
+        ja: '経路が運べるパケットの大きさの見つけ方',
+      },
+    },
   ],
   questions: [
     {

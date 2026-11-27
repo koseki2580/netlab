@@ -5,8 +5,9 @@ import type { ExamLevel } from './examQuestions';
  * The test of stage 7 (最新とクラウド): TLS 1.3, HTTP/2, HTTP/3 over QUIC, TCP
  * congestion control, and the stage's newer lessons — cloud networks (VPC),
  * SD-WAN, L4S, Encrypted Client Hello and post-quantum key exchange. The
- * stage's other lessons are asked through wave C (`examPoolC.ts`), each in the
- * slot of a related topic, so one attempt asks some of them, not all. Every
+ * stage's other lessons are asked through waves C and D (`examPoolC.ts`,
+ * `examPoolD.ts`), each in the slot of a related topic, so one attempt asks
+ * some of them, not all. Every
  * answer is what the named lesson shows when run, and what the standard says.
  */
 export const EXAM_STAGE_7: ExamLevel = {
@@ -54,6 +55,15 @@ export const EXAM_STAGE_7: ExamLevel = {
       },
     },
     {
+      id: 'mobile-core',
+      path: lessonPath('/networking/mobile-core'),
+      title: { en: '5G core: the user plane', ja: '5G コア：ユーザプレーン' },
+      teaches: {
+        en: 'A phone’s session when it changes base station',
+        ja: 'スマートフォンが基地局を変えたときのセッション',
+      },
+    },
+    {
       id: 'mptcp',
       path: lessonPath('/networking/mptcp'),
       title: { en: 'Multipath TCP', ja: 'Multipath TCP（MPTCP）' },
@@ -87,6 +97,15 @@ export const EXAM_STAGE_7: ExamLevel = {
       teaches: {
         en: 'TCP options on a long, fast path',
         ja: '遠くて速い経路での TCP のオプション',
+      },
+    },
+    {
+      id: 'tcp-cubic',
+      path: lessonPath('/networking/tcp-cubic'),
+      title: { en: 'CUBIC and RACK-TLP', ja: 'CUBIC と RACK-TLP' },
+      teaches: {
+        en: 'Getting the window back after a loss',
+        ja: '損失のあとにウィンドウを取り戻すこと',
       },
     },
     {

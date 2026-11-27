@@ -110,6 +110,18 @@ export const EXAM_PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'websocket',
+    path: lessonPath('/networking/websocket'),
+    title: {
+      en: 'Polling, long polling and WebSocket',
+      ja: 'ポーリング、ロングポーリング、WebSocket',
+    },
+    teaches: {
+      en: 'Requests over a connection that may drop',
+      ja: '切れるかもしれない接続で送る要求',
+    },
+  },
+  {
     id: 'udp',
     path: lessonPath('/networking/udp'),
     title: { en: 'UDP datagram', ja: 'UDP のデータグラム' },
@@ -128,6 +140,15 @@ export const EXAM_PATH: readonly PathStop[] = [
     },
   },
   {
+    id: 'dhcp-lease',
+    path: lessonPath('/networking/dhcp-lease'),
+    title: { en: 'DHCP lease lifecycle', ja: 'DHCP リースのライフサイクル' },
+    teaches: {
+      en: 'What a client does as its lease runs on',
+      ja: 'リースの期間中にクライアントがすること',
+    },
+  },
+  {
     id: 'dns-resolution',
     path: lessonPath('/services/dns-resolution'),
     title: { en: 'DNS resolution and caching', ja: 'DNS の名前解決とキャッシュ' },
@@ -143,6 +164,15 @@ export const EXAM_PATH: readonly PathStop[] = [
     teaches: {
       en: 'What the edge router does to addresses',
       ja: '出口のルータがアドレスにすること',
+    },
+  },
+  {
+    id: 'cgnat',
+    path: lessonPath('/networking/cgnat'),
+    title: { en: 'Carrier-grade NAT', ja: 'キャリアグレード NAT' },
+    teaches: {
+      en: 'Many subscribers on one public address',
+      ja: '1 つのグローバルアドレスを使う多くの加入者',
     },
   },
 ];

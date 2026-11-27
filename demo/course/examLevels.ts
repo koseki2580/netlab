@@ -9,12 +9,14 @@ import { EXAM_STAGE_7 } from './examStage7';
 import { POOL_A } from './examPoolA';
 import { POOL_B } from './examPoolB';
 import { POOL_C } from './examPoolC';
+import { POOL_D } from './examPoolD';
 
 /**
  * A level with a pool (REQ-194): each original question and its partners make
  * one slot. A level whose questions are not all partnered keeps no pool. Wave
  * C adds, after a slot's three, questions on lessons of the same topic that no
- * slot asked about before, each taught by its own stop.
+ * slot asked about before, each taught by its own stop; wave D does the same
+ * for the lessons of REQ-429 to REQ-440.
  */
 function withPool(level: ExamLevel): ExamLevel {
   const partners = level.questions.map((question) => [
@@ -28,6 +30,7 @@ function withPool(level: ExamLevel): ExamLevel {
       question,
       ...partners[index]!,
       ...(POOL_C.get(question.id) ?? []),
+      ...(POOL_D.get(question.id) ?? []),
     ]),
   };
 }

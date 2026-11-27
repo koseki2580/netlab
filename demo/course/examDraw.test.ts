@@ -76,6 +76,34 @@ describe('the lessons of stages 6 and 7 that wave C covers are asked in their st
   }
 });
 
+// TC-2601: each lesson of REQ-429 to REQ-440 is asked in its own stage's tests (wave D).
+describe('the lessons wave D covers are asked in their stage’s tests (TC-2601)', () => {
+  const COVERED: Record<2 | 3 | 4 | 5 | 6 | 7, readonly string[]> = {
+    2: ['/networking/mac-learning', '/networking/optical'],
+    3: ['/networking/plpmtud'],
+    4: ['/networking/dhcp-lease', '/networking/cgnat', '/networking/websocket'],
+    5: ['/networking/time-sync', '/networking/ipv6-addressing'],
+    6: ['/networking/route-reflector', '/networking/lossless-dc'],
+    7: ['/networking/tcp-cubic', '/networking/mobile-core'],
+  };
+  for (const number of [2, 3, 4, 5, 6, 7] as const) {
+    it(`stage ${number}`, () => {
+      const stage = STAGES.find((entry) => entry.number === number)!;
+      const asked = new Set(
+        stage.checkpoints.flatMap((checkpoint) => {
+          if (checkpoint.kind !== 'exam') return [];
+          const level = examLevel(checkpoint.level)!;
+          return level.slots!.flat().map((q) => levelStop(level, q.taughtBy)!.path);
+        }),
+      );
+      for (const path of COVERED[number]) {
+        expect(stage.lessons as readonly string[], path).toContain(path);
+        expect(asked.has(path), path).toBe(true);
+      }
+    });
+  }
+});
+
 // TC-1351
 describe('a draw asks one question from each slot (TC-1351)', () => {
   for (const level of POOLED) {
